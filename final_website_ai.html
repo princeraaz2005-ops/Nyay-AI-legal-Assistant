@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>⚖️ Nyay AI — Legal Decision Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  nav{
+  backdrop-filter: blur(120px);
+}
+  @media(max-width:768px){
+
+  /* Hide desktop menu */
+  .nav-links{
+    display: none !important;
+  }
+
+  /* Fix navbar layout */
+  nav{
+    justify-content: center;
+    position: relative;
+    padding: 0 10px;
+  }
+
+  /* Menu button left */
+  .menu-btn{
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  /* Logo center */
+  .nav-brand{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    
+    white-space: nowrap; /* 🔥 VERY IMPORTANT */
+    font-size: 1.1rem;   /* slightly smaller for mobile */
+  }
+
+}
+  .nav-brand {
+    margin-left: 0%;
+  }
+  .nav-links{
+  margin-left: auto;
+}
+.nav-brand{
+  cursor:pointer;
+}
+  .menu-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.3rem;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -260px;
+  width: 250px;
+  height: 100%;
+  background: #0d1b2a;
+  color: white;
+  padding: 1rem;
+  transition: 0.3s;
+  z-index: 300;
+}
+
+.sidebar.active {
+  left: 0;
+}
+
+.sidebar-header {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.sidebar button {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: #aac4dd;
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.sidebar button:hover {
+  background: rgba(201,151,58,0.2);
+  color: #c9973a;
+}
+
+.close-btn {
+  cursor: pointer;
+}
+
+#overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  z-index: 200;
+}
+
+#overlay.active {
+  display: block;
+}
+  :root { --ink:#0d1b2a; --deep:#0a3d62; --gold:#c9973a; --cream:#f7f3ec; --mist:#e8f0f7; --danger:#c0392b; --success:#1a7a4a; --mid:#5a7a99; --gem:#4285f4; --radius:14px; --shadow:0 4px 24px rgba(13,27,42,0.10); }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"DM Sans",sans-serif;background:var(--cream);color:var(--ink);min-height:100vh}
+  nav{background:var(--ink);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:200;box-shadow:0 2px 16px rgba(0,0,0,0.3)}
+  .nav-brand{font-family:"Cormorant Garamond",serif;font-size:1.3rem;font-weight:700;color:var(--gold)}
+  .nav-links{display:flex;gap:0.2rem;flex-wrap:wrap}
+  .nav-btn{background:none;border:none;color:#aac4dd;font-family:"DM Sans",sans-serif;font-size:0.82rem;font-weight:500;padding:0.4rem 0.85rem;border-radius:8px;cursor:pointer;transition:all 0.2s}
+  .nav-btn:hover,.nav-btn.active{background:rgba(201,151,58,0.15);color:var(--gold)}
+  .page{display:none;padding:1.5rem;max-width:1140px;margin:0 auto;animation:fadeIn 0.3s ease}
+  .page.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .hero{background:linear-gradient(135deg,var(--ink) 0%,#0a3d62 55%,#1a5276 100%);border-radius:20px;padding:2.5rem 2rem;color:white;position:relative;overflow:hidden;margin-bottom:1.5rem}
+  .hero::before{content:"⚖";position:absolute;right:-10px;top:-20px;font-size:12rem;opacity:0.05;line-height:1}
+  .hero h1{font-family:"Cormorant Garamond",serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:700;line-height:1.15;margin-bottom:0.6rem}
+  .hero h1 span{color:var(--gold)}
+  .hero p{font-size:1rem;opacity:0.82;max-width:540px;line-height:1.6;margin-bottom:1.3rem}
+  .hero-btns{display:flex;gap:0.75rem;flex-wrap:wrap}
+  .btn-primary{background:var(--gold);color:var(--ink);border:none;padding:0.7rem 1.4rem;border-radius:10px;font-family:"DM Sans",sans-serif;font-weight:600;font-size:0.92rem;cursor:pointer;transition:all 0.2s}
+  .btn-primary:hover{background:#e0aa44;transform:translateY(-1px)}
+  .btn-outline{background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.3);padding:0.7rem 1.4rem;border-radius:10px;font-family:"DM Sans",sans-serif;font-weight:500;font-size:0.92rem;cursor:pointer;transition:all 0.2s}
+  .btn-outline:hover{background:rgba(255,255,255,0.18)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem}
+  .stat-card{background:white;border-radius:var(--radius);padding:1.1rem 1.3rem;border-left:4px solid var(--gold);box-shadow:var(--shadow)}
+  .stat-num{font-family:"Cormorant Garamond",serif;font-size:2.2rem;font-weight:700;color:var(--deep)}
+  .stat-label{font-size:0.78rem;color:var(--mid);margin-top:2px;line-height:1.4}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.5rem}
+  .step-card{background:white;border-radius:var(--radius);padding:1.3rem;box-shadow:var(--shadow)}
+  .step-num{width:32px;height:32px;background:var(--deep);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;margin-bottom:0.7rem}
+  .step-card h3{font-size:1rem;margin-bottom:0.35rem;color:var(--deep)}
+  .step-card p{font-size:0.84rem;color:var(--mid);line-height:1.55}
+  .section-title{font-family:"Cormorant Garamond",serif;font-size:1.7rem;font-weight:700;color:var(--ink);margin-bottom:1.1rem;padding-bottom:0.4rem;border-bottom:2px solid var(--gold)}
+  .input-area{background:white;border-radius:var(--radius);padding:1.2rem;box-shadow:var(--shadow);margin-bottom:1.2rem}
+  .input-area textarea{width:100%;border:1px solid #d0c8bc;border-radius:10px;padding:0.8rem 1rem;font-family:"DM Sans",sans-serif;font-size:0.92rem;resize:vertical;min-height:90px;background:var(--cream);color:var(--ink);margin-bottom:0.8rem}
+  .input-area textarea:focus{outline:2px solid var(--gold);border-color:transparent}
+  .action-btn{background:var(--gold);color:var(--ink);border:none;border-radius:10px;padding:0.75rem 2rem;font-family:"DM Sans",sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;transition:all 0.2s}
+  .action-btn:hover{background:#e0aa44;transform:translateY(-1px)}
+  .action-btn:disabled{background:#ccc;cursor:not-allowed;transform:none}
+  .ai-card{background:white;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:1.2rem}
+  .ai-card-header{padding:0.9rem 1.2rem;display:flex;align-items:center;gap:0.7rem;background:var(--gem);color:white}
+  .ai-card-header h3{font-size:0.95rem;font-weight:600}
+  .ai-card-header p{font-size:0.72rem;opacity:0.85}
+  .ai-card-body{padding:1.2rem;font-size:0.88rem;line-height:1.65;color:var(--ink);min-height:180px;white-space:pre-wrap}
+  .ai-card-body.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--mid)}
+  .verdict-card{background:var(--ink);color:white;border-radius:var(--radius);padding:1.4rem 1.5rem;margin-bottom:1.2rem;box-shadow:var(--shadow)}
+  .verdict-card h3{font-family:"Cormorant Garamond",serif;font-size:1.4rem;color:var(--gold);margin-bottom:0.7rem}
+  .verdict-card p{font-size:0.9rem;line-height:1.65;white-space:pre-wrap}
+  .verdict-badges{display:flex;gap:0.7rem;margin-top:0.9rem;flex-wrap:wrap}
+  .vbadge{padding:0.35rem 0.9rem;border-radius:20px;font-size:0.78rem;font-weight:600}
+  .vbadge.strong{background:#1a7a4a;color:white} .vbadge.moderate{background:#c9973a;color:var(--ink)} .vbadge.weak{background:#c0392b;color:white} .vbadge.info{background:rgba(255,255,255,0.15);color:white}
+  .resources-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0.9rem;margin-bottom:1.2rem}
+  .resource-card{background:white;border-radius:var(--radius);padding:1rem 1.1rem;box-shadow:var(--shadow);border-left:3px solid var(--gold)}
+  .resource-card h4{font-size:0.92rem;color:var(--deep);margin-bottom:0.3rem}
+  .resource-card p{font-size:0.8rem;color:var(--mid);line-height:1.5;margin-bottom:0.5rem}
+  .resource-card a{font-size:0.8rem;color:var(--gold);text-decoration:none;font-weight:600}
+  .resource-card a:hover{text-decoration:underline}
+  .doc-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:1.3rem}
+  @media(max-width:700px){.doc-grid{grid-template-columns:1fr}}
+  .form-card{background:white;border-radius:var(--radius);padding:1.4rem;box-shadow:var(--shadow)}
+  .form-group{margin-bottom:0.9rem}
+  .form-group label{display:block;font-size:0.75rem;font-weight:600;color:var(--mid);margin-bottom:0.3rem;text-transform:uppercase;letter-spacing:0.04em}
+  .form-group input,.form-group select,.form-group textarea{width:100%;border:1px solid #d0c8bc;border-radius:8px;padding:0.6rem 0.85rem;font-family:"DM Sans",sans-serif;font-size:0.88rem;background:var(--cream);color:var(--ink)}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:2px solid var(--gold);border-color:transparent}
+  .form-group textarea{resize:vertical;min-height:85px}
+  .gen-btn{width:100%;background:var(--gold);color:var(--ink);border:none;border-radius:10px;padding:0.8rem;font-family:"DM Sans",sans-serif;font-weight:700;font-size:0.92rem;cursor:pointer;transition:all 0.2s;margin-top:0.4rem}
+  .gen-btn:hover{background:#e0aa44;transform:translateY(-1px)} .gen-btn:disabled{background:#ccc;cursor:not-allowed;transform:none}
+  .doc-output{background:white;border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column}
+  .doc-output-header{background:var(--ink);color:white;padding:0.85rem 1.2rem;border-radius:var(--radius) var(--radius) 0 0;display:flex;align-items:center;justify-content:space-between}
+  .doc-output-header span{font-size:0.88rem;font-weight:600}
+  .download-btn{background:var(--gold);color:var(--ink);border:none;border-radius:7px;padding:0.38rem 0.85rem;font-family:"DM Sans",sans-serif;font-weight:600;font-size:0.78rem;cursor:pointer;display:none}
+  .doc-text{flex:1;padding:1.3rem;font-family:"Courier New",monospace;font-size:0.82rem;line-height:1.75;white-space:pre-wrap;color:var(--ink);overflow-y:auto;min-height:400px;max-height:500px}
+  .doc-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;color:var(--mid);gap:0.6rem}
+  .doc-placeholder .icon{font-size:2.8rem;opacity:0.4}
+  .map-controls{background:white;border-radius:var(--radius);padding:1.2rem;box-shadow:var(--shadow);margin-bottom:1.2rem}
+  .map-controls h3{font-size:0.95rem;font-weight:600;color:var(--deep);margin-bottom:0.8rem}
+  .filter-row{display:flex;gap:0.7rem;flex-wrap:wrap;align-items:center}
+  .filter-row select,.filter-row input{border:1px solid #d0c8bc;border-radius:8px;padding:0.52rem 0.85rem;font-family:"DM Sans",sans-serif;font-size:0.85rem;background:white;color:var(--ink)}
+  .find-btn{background:var(--deep);color:white;border:none;border-radius:8px;padding:0.52rem 1.2rem;font-family:"DM Sans",sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer}
+  .find-btn:hover{background:#0a4f80}
+  #map{width:100%;height:460px;border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1rem;background:#e8f0f7}
+  .map-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:460px;color:var(--mid);gap:0.8rem;font-size:0.9rem;text-align:center;padding:2rem}
+  .map-placeholder .icon{font-size:3rem;opacity:0.4}
+  .lawyers-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+  .lawyer-card{background:white;border-radius:var(--radius);padding:1.1rem;box-shadow:var(--shadow);border-top:3px solid var(--gold);transition:transform 0.2s;cursor:pointer}
+  .lawyer-card:hover{transform:translateY(-3px)}
+  .lawyer-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.4rem}
+  .lawyer-name{font-weight:600;font-size:0.95rem;color:var(--ink)}
+  .lawyer-rating{background:#fff8e6;color:var(--gold);font-weight:700;font-size:0.82rem;padding:2px 8px;border-radius:20px;border:1px solid #f0d080}
+  .lawyer-spec{font-size:0.8rem;color:var(--deep);font-weight:600;margin-bottom:0.5rem}
+  .lawyer-meta{font-size:0.78rem;color:var(--mid);line-height:1.7}
+  .gmaps-btn{display:inline-flex;align-items:center;gap:0.4rem;margin-top:0.7rem;background:#4285f4;color:white;border:none;border-radius:7px;padding:0.38rem 0.85rem;font-family:"DM Sans",sans-serif;font-weight:600;font-size:0.78rem;cursor:pointer;text-decoration:none}
+  .gmaps-btn:hover{background:#3367d6}
+  .disclaimer{background:#fffbf0;border-left:4px solid var(--gold);border-radius:8px;padding:0.8rem 1rem;font-size:0.8rem;color:#7a5a00;margin-top:1.2rem;line-height:1.5}
+  .spinner{width:26px;height:26px;border:3px solid #e0d5c5;border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 0.6rem}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-thumb{background:#c8bfb0;border-radius:10px}
+
+  .cases-hero{background:linear-gradient(135deg,#1a0a2e,#0a3d62);border-radius:var(--radius);padding:1.5rem;color:white;margin-bottom:1.2rem;display:flex;align-items:center;gap:1.2rem}
+  .cases-hero .icon{font-size:2.5rem;flex-shrink:0}
+  .cases-hero h2{font-family:"Cormorant Garamond",serif;font-size:1.4rem;margin-bottom:0.3rem}
+  .cases-hero p{font-size:0.83rem;opacity:0.8;line-height:1.5}
+  .case-card{background:white;border-radius:var(--radius);padding:1.3rem 1.5rem;box-shadow:var(--shadow);border-left:4px solid var(--gold);margin-bottom:1rem;transition:all 0.2s;position:relative;overflow:hidden}
+  .case-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(13,27,42,0.15)}
+  .case-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:var(--deep);color:white;border-radius:50%;font-size:0.72rem;font-weight:700;margin-bottom:0.6rem}
+  .case-card h4{font-size:0.95rem;color:var(--deep);margin-bottom:0.35rem;font-weight:600;line-height:1.4}
+  .case-tags{display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.5rem}
+  .case-tag{background:var(--mist);color:var(--deep);border-radius:20px;padding:2px 9px;font-size:0.7rem;font-weight:600}
+  .case-tag.outcome-win{background:#e8f8f0;color:#1a7a4a}
+  .case-tag.outcome-partial{background:#fff8e6;color:#7a5a00}
+  .case-tag.outcome-loss{background:#fde8e8;color:#c0392b}
+  .case-snippet{font-size:0.83rem;color:var(--ink);line-height:1.6;margin-bottom:0.7rem}
+  .case-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem}
+  .case-court{font-size:0.75rem;color:var(--mid)}
+  .case-link{font-size:0.8rem;color:var(--gold);text-decoration:none;font-weight:600}
+  .case-link:hover{text-decoration:underline}
+  .relevance-bar{height:4px;background:#e0d5c5;border-radius:2px;margin-bottom:0.8rem}
+  .relevance-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold),#e0aa44)}
+  .ai-insight{background:linear-gradient(135deg,#0d1b2a,#0a3d62);color:white;border-radius:var(--radius);padding:1.2rem 1.4rem;margin-bottom:1.2rem}
+  .ai-insight h3{font-family:"Cormorant Garamond",serif;font-size:1.2rem;color:var(--gold);margin-bottom:0.6rem}
+  .ai-insight p{font-size:0.86rem;line-height:1.7;white-space:pre-wrap}
+  .search-bar{display:flex;gap:0.7rem;margin-bottom:1rem;flex-wrap:wrap}
+  .search-bar input{flex:1;min-width:200px;border:1px solid #d0c8bc;border-radius:10px;padding:0.7rem 1rem;font-family:"DM Sans",sans-serif;font-size:0.9rem;background:var(--cream);color:var(--ink)}
+  .search-bar input:focus{outline:2px solid var(--gold);border-color:transparent}
+  .search-bar button{background:var(--gold);color:var(--ink);border:none;border-radius:10px;padding:0.7rem 1.4rem;font-family:"DM Sans",sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer}
+  .search-bar button:hover{background:#e0aa44}
+  .quick-tags{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.2rem}
+  .quick-tag{background:white;border:1px solid #d0c8bc;border-radius:20px;padding:0.35rem 0.9rem;font-size:0.78rem;cursor:pointer;transition:all 0.2s;color:var(--deep);font-weight:500}
+  .quick-tag:hover{background:var(--deep);color:white;border-color:var(--deep)}
+
+
+  /* CHAT HISTORY */
+  .history-list{display:flex;flex-direction:column;gap:0.8rem}
+  .history-item{background:white;border-radius:var(--radius);padding:1rem 1.2rem;box-shadow:var(--shadow);border-left:4px solid var(--deep);cursor:pointer;transition:all 0.2s;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}
+  .history-item:hover{transform:translateY(-2px);border-left-color:var(--gold)}
+  .history-item .h-title{font-weight:600;font-size:0.9rem;color:var(--ink);margin-bottom:0.2rem}
+  .history-item .h-preview{font-size:0.78rem;color:var(--mid);line-height:1.4}
+  .history-item .h-date{font-size:0.72rem;color:var(--mid);white-space:nowrap}
+  .history-item .h-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:600;margin-top:0.3rem}
+  .history-item .h-badge.strong{background:#e8f8f0;color:#1a7a4a}
+  .history-item .h-badge.moderate{background:#fff8e6;color:#7a5a00}
+  .history-item .h-badge.weak{background:#fde8e8;color:#c0392b}
+  .del-btn{background:none;border:none;color:#ccc;cursor:pointer;font-size:1rem;padding:0.2rem;flex-shrink:0}
+  .del-btn:hover{color:var(--danger)}
+
+  /* COST ESTIMATOR */
+  .cost-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.2rem}
+  .cost-card{background:white;border-radius:var(--radius);padding:1.2rem;box-shadow:var(--shadow);text-align:center;border-top:3px solid var(--gold)}
+  .cost-card .cost-icon{font-size:2rem;margin-bottom:0.5rem}
+  .cost-card .cost-label{font-size:0.78rem;color:var(--mid);margin-bottom:0.3rem;text-transform:uppercase;letter-spacing:0.04em}
+  .cost-card .cost-value{font-family:"Cormorant Garamond",serif;font-size:1.6rem;font-weight:700;color:var(--deep)}
+  .cost-card .cost-range{font-size:0.72rem;color:var(--mid);margin-top:0.2rem}
+  .cost-total{background:var(--ink);color:white;border-radius:var(--radius);padding:1.2rem 1.5rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem}
+  .cost-total h3{font-family:"Cormorant Garamond",serif;font-size:1.3rem;color:var(--gold)}
+  .cost-total .total-val{font-family:"Cormorant Garamond",serif;font-size:2rem;font-weight:700;color:white}
+
+  /* TIMELINE */
+  .timeline{position:relative;padding-left:2rem;margin-bottom:1.2rem}
+  .timeline::before{content:"";position:absolute;left:0.6rem;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--gold),var(--deep))}
+  .timeline-step{position:relative;margin-bottom:1.2rem}
+  .timeline-dot{position:absolute;left:-1.65rem;top:0.3rem;width:16px;height:16px;border-radius:50%;background:var(--gold);border:2px solid white;box-shadow:0 0 0 2px var(--gold)}
+  .timeline-step.done .timeline-dot{background:var(--success)}
+  .timeline-step.active .timeline-dot{background:var(--gold);animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 2px var(--gold)}50%{box-shadow:0 0 0 6px rgba(201,151,58,0.3)}}
+  .timeline-content{background:white;border-radius:var(--radius);padding:1rem 1.2rem;box-shadow:var(--shadow)}
+  .timeline-content h4{font-size:0.92rem;color:var(--deep);margin-bottom:0.3rem;font-weight:600}
+  .timeline-content p{font-size:0.82rem;color:var(--mid);line-height:1.5}
+  .timeline-content .t-badge{display:inline-block;background:var(--mist);color:var(--deep);border-radius:20px;padding:2px 9px;font-size:0.7rem;font-weight:600;margin-top:0.4rem}
+
+  /* ASSIGN LAWYER MODAL */
+  .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:500;display:none;align-items:center;justify-content:center}
+  .modal-overlay.active{display:flex}
+  .modal{background:white;border-radius:20px;padding:1.8rem;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+  .modal h2{font-family:"Cormorant Garamond",serif;font-size:1.5rem;color:var(--ink);margin-bottom:1rem}
+  .assign-lawyer-card{border:1px solid #e0d5c5;border-radius:var(--radius);padding:1rem;margin-bottom:0.8rem;cursor:pointer;transition:all 0.2s}
+  .assign-lawyer-card:hover,.assign-lawyer-card.selected{border-color:var(--gold);background:#fffbf0}
+  .assign-lawyer-card h4{font-size:0.92rem;color:var(--deep);margin-bottom:0.2rem}
+  .assign-lawyer-card p{font-size:0.78rem;color:var(--mid)}
+  .modal-btns{display:flex;gap:0.7rem;margin-top:1rem}
+  .modal-btn{flex:1;padding:0.75rem;border:none;border-radius:10px;font-family:"DM Sans",sans-serif;font-weight:600;cursor:pointer;font-size:0.9rem}
+  .modal-btn.primary{background:var(--gold);color:var(--ink)}
+  .modal-btn.secondary{background:var(--mist);color:var(--deep)}
+
+  /* WHATSAPP BUTTONS */
+  .wa-btn{display:inline-flex;align-items:center;gap:0.5rem;background:#25D366;color:white;border:none;border-radius:10px;padding:0.6rem 1.2rem;font-family:"DM Sans",sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer;text-decoration:none;transition:all 0.2s}
+  .wa-btn:hover{background:#1ebe5d;transform:translateY(-1px)}
+  .action-bar{display:flex;gap:0.7rem;flex-wrap:wrap;margin-top:1rem;padding-top:1rem;border-top:1px solid #e0d5c5}
+
+  /* ── LEGAL PROOF BOX ─────────────────────────────────────────── */
+  #proofBoxSection {
+    margin-top: 1.2rem;
+    animation: fadeIn 0.4s ease;
+  }
+  .proof-box-header {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.8rem;
+  }
+  .proof-box-header h3 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .proof-box-header .proof-badge {
+    background: var(--gold);
+    color: var(--ink);
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .proof-cards-wrap {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+  .proof-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border: 1px solid #e8e0d5;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .proof-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(13,27,42,0.14);
+  }
+  .proof-card-top {
+    background: linear-gradient(135deg, var(--ink), #0a3d62);
+    padding: 0.9rem 1.1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+  .proof-law-icon {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .proof-law-meta h4 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1.3;
+    margin-bottom: 0.15rem;
+  }
+  .proof-law-meta .proof-act-name {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.65);
+    font-weight: 500;
+  }
+  .proof-card-img-wrap {
+    position: relative;
+    background: #f0e8d8;
+    border-bottom: 1px solid #e0d5c5;
+    overflow: hidden;
+    max-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .proof-card-img-wrap img {
+    width: 100%;
+    max-height: 180px;
+    object-fit: cover;
+    object-position: top;
+    display: block;
+    cursor: zoom-in;
+    transition: transform 0.2s;
+  }
+  .proof-card-img-wrap img:hover {
+    transform: scale(1.02);
+  }
+  .proof-img-label {
+    position: absolute;
+    bottom: 6px;
+    right: 8px;
+    background: rgba(13,27,42,0.75);
+    color: #f0d080;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    backdrop-filter: blur(4px);
+    letter-spacing: 0.04em;
+  }
+  .proof-card-body {
+    padding: 1rem 1.1rem;
+  }
+  .proof-summary {
+    font-size: 0.84rem;
+    color: var(--ink);
+    line-height: 1.65;
+    margin-bottom: 0.8rem;
+  }
+  .proof-meta-row {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
+  .proof-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: var(--mist);
+    color: var(--deep);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+  .proof-chip.book { background: #fff8e6; color: #7a5a00; }
+  .proof-chip.section { background: #e8f0f7; color: var(--deep); }
+  .proof-chip.penalty { background: #fde8e8; color: var(--danger); }
+  .proof-penalty-note {
+    font-size: 0.78rem;
+    color: var(--danger);
+    font-weight: 600;
+    background: #fde8e8;
+    border-radius: 8px;
+    padding: 0.45rem 0.75rem;
+    margin-bottom: 0.7rem;
+    border-left: 3px solid var(--danger);
+  }
+  .proof-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.65rem 1.1rem;
+    background: var(--cream);
+    border-top: 1px solid #ede5d8;
+    font-size: 0.73rem;
+    color: var(--mid);
+  }
+  .proof-verified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: #e8f8f0;
+    color: var(--success);
+    border-radius: 20px;
+    padding: 2px 9px;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+  .proof-empty {
+    background: var(--mist);
+    border-radius: var(--radius);
+    padding: 1.2rem 1.4rem;
+    color: var(--mid);
+    font-size: 0.85rem;
+    text-align: center;
+  }
+
+  /* ── IMAGE LIGHTBOX ─────────────────────────────────────────────── */
+  #imgLightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0,0,0,0.92);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+    animation: fadeIn 0.2s ease;
+  }
+  #imgLightbox.open { display: flex; }
+  #imgLightbox img {
+    max-width: 92vw;
+    max-height: 82vh;
+    border-radius: 10px;
+    box-shadow: 0 8px 60px rgba(0,0,0,0.6);
+    object-fit: contain;
+    cursor: zoom-out;
+  }
+  #imgLightbox .lb-caption {
+    color: rgba(255,255,255,0.75);
+    font-size: 0.82rem;
+    text-align: center;
+    max-width: 600px;
+    line-height: 1.5;
+  }
+  #imgLightbox .lb-close {
+    position: absolute;
+    top: 1rem;
+    right: 1.2rem;
+    background: rgba(255,255,255,0.12);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  #imgLightbox .lb-close:hover { background: rgba(255,255,255,0.25); }
+  #imgLightbox .lb-hint {
+    color: rgba(255,255,255,0.35);
+    font-size: 0.72rem;
+  }
+</style>
+</head>
+<body>
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    ⚖️ Nyay AI
+    <span class="close-btn" onclick="toggleSidebar()">✖</span>
+  </div>
+
+  <button onclick="navigate('home')">🏠 Home</button>
+  <button onclick="navigate('advisor')">🤖 AI Advisor</button>
+  <button onclick="navigate('docs')">📄 Documents</button>
+  <button onclick="navigate('cases')">⚖️ Similar Cases</button>
+  <button onclick="navigate('lawyers')">🗺️ Find Lawyers</button>
+  <button onclick="navigate('advocate')">👨‍⚖️ Advocate Profile</button>
+  <button onclick="navigate('history')">💬 Chat History</button>
+</div>
+
+<div id="overlay" onclick="toggleSidebar()"></div>
+
+<nav>
+  <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+  <div class="nav-brand" onclick="showPage('home', document.querySelectorAll('.nav-btn')[0])">
+    ⚖️ Nyay AI
+  </div>
+  <div class="nav-links">
+    <button class="nav-btn active" onclick="showPage('home',this)">🏠 Home</button>
+    <button class="nav-btn" onclick="showPage('advisor',this)">🤖 AI Advisor</button>
+    <button class="nav-btn" onclick="showPage('docs',this)">📄 Documents</button>
+    <button class="nav-btn" onclick="showPage('cases',this)">⚖️ Similar Cases</button>
+    <button class="nav-btn" onclick="showPage('lawyers',this)">🗺️ Find Lawyers</button>
+    <button class="nav-btn" onclick="showPage('advocate',this)">👨‍⚖️ Advocate</button>
+    <button class="nav-btn" onclick="showPage('history',this)">💬 History</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <h1>Legal Access for<br><span>Every Indian</span></h1>
+    <p>AI-powered legal guidance — understand your rights, draft court-ready documents, and find real lawyers near you on Google Maps. Free, fast, multilingual.</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="showPage('advisor',document.querySelectorAll('.nav-btn')[1])">🤖 Get Legal Advice</button>
+      <button class="btn-outline" onclick="showPage('lawyers',document.querySelectorAll('.nav-btn')[3])">🗺️ Find Lawyers on Maps</button>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat-card"><div class="stat-num">1.4B</div><div class="stat-label">People who could benefit in India</div></div>
+    <div class="stat-card"><div class="stat-num">80%</div><div class="stat-label">Litigants who cant afford legal help</div></div>
+    <div class="stat-card"><div class="stat-num">~0</div><div class="stat-label">Meaningful legal access in rural India</div></div>
+    <div class="stat-card"><div class="stat-num">20+</div><div class="stat-label">Indian languages supported</div></div>
+  </div>
+  <div class="steps">
+    <div class="step-card"><div class="step-num">1</div><h3>🧠 Describe</h3><p>Tell us your legal problem in Hindi, Marathi, or English.</p></div>
+    <div class="step-card"><div class="step-num">2</div><h3>🤖 Analyze</h3><p>Gemini AI identifies relevant Indian laws, your rights, and estimates case strength.</p></div>
+    <div class="step-card"><div class="step-num">3</div><h3>📄 Act</h3><p>Generate court-ready documents and find real verified lawyers near you on Google Maps.</p></div>
+  </div>
+  <div class="disclaimer">⚠️ <strong>Disclaimer:</strong> Nyay AI provides general legal information only — not legal advice. Always consult a qualified advocate.</div>
+</div>
+
+<!-- AI ADVISOR -->
+<div id="page-advisor" class="page">
+  <div class="section-title">🤖 AI Legal Advisor</div>
+  <div class="input-area">
+    <p style="font-size:0.85rem;color:var(--mid);margin-bottom:0.7rem">Describe your legal problem — Gemini AI will analyze it, explain your rights in plain language, and tell you your next steps.</p>
+    <textarea id="advisorInput" placeholder="Example: My landlord is refusing to return my Rs.60,000 security deposit after I vacated 2 months ago. He claims property damage but I have photos showing good condition..."></textarea>
+    <div style="display:flex;gap:0.8rem;align-items:center;flex-wrap:wrap">
+      <button class="action-btn" id="advisorBtn" onclick="runAnalysis()">⚡ Analyze My Case</button>
+      <span style="font-size:0.8rem;color:var(--mid)">Hindi / Marathi / English supported</span>
+    </div>
+  </div>
+  <div id="advisorResults" style="display:none">
+    <div class="ai-card">
+      <div class="ai-card-header"><div><h3>🤖 Nyay AI Legal Analysis</h3><p>Powered by OpenRouter (Free)</p></div></div>
+      <div class="ai-card-body loading" id="gemBody"><div class="spinner"></div>Analyzing your case...</div>
+    </div>
+    <div class="verdict-card" id="verdictCard" style="display:none">
+      <h3>⚖️ Case Summary</h3>
+      <p id="verdictText"></p>
+      <div class="verdict-badges" id="verdictBadges"></div>
+    </div>
+    <div id="resourcesSection" style="display:none">
+      <div class="section-title" style="font-size:1.3rem;margin-top:1rem">📚 Legal Resources</div>
+      <div class="resources-grid" id="resourcesGrid"></div>
+    </div>
+    <!-- LEGAL PROOF BOX -->
+    <div id="proofBoxSection" style="display:none">
+      <div class="proof-box-header">
+        <h3>📖 Legal Proof Reference</h3>
+        <span class="proof-badge">Book Verified</span>
+      </div>
+      <div class="proof-cards-wrap" id="proofCardsWrap"></div>
+    </div>
+  </div>
+    <div id="actionBar" style="display:none" class="action-bar">
+    <button class="wa-btn" onclick="shareOnWhatsApp()">📱 Share on WhatsApp</button>
+    <button class="wa-btn" style="background:#075e54" onclick="sendFIRWhatsApp()">📋 Send FIR on WhatsApp</button>
+    <button onclick="openAssignLawyer()" style="background:var(--success);color:white;border:none;border-radius:10px;padding:0.6rem 1.2rem;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer">⚖️ Assign a Lawyer</button>
+  </div>
+  <div class="disclaimer">⚠️ <strong>Not legal advice.</strong> Always consult a qualified advocate before taking action.</div>
+</div>
+
+<!-- DOCUMENTS -->
+<div id="page-docs" class="page">
+  <div class="section-title">📄 Legal Document Generator</div>
+  <div class="doc-grid">
+    <div class="form-card">
+      <div class="form-group"><label>Document Type</label>
+        <select id="docType">
+          <option>FIR Draft (First Information Report)</option>
+          <option>Legal Notice</option><option>Bail Application</option>
+          <option>Consumer Complaint</option><option>RTI Application</option>
+          <option>Rent Dispute Notice</option><option>Cheque Bounce Notice (NI Act)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Your Full Name</label><input type="text" id="dName" placeholder="Ramesh Kumar Sharma"/></div>
+      <div class="form-group"><label>Your Address</label><input type="text" id="dAddress" placeholder="123 MG Road, Pune, Maharashtra"/></div>
+      <div class="form-group"><label>Opposite Party</label><input type="text" id="dOpponent" placeholder="Landlord / company / person name"/></div>
+      <div class="form-group"><label>Date of Incident</label><input type="date" id="dDate"/></div>
+      <div class="form-group"><label>Describe the Situation</label><textarea id="dDesc" placeholder="My landlord refused to return Rs.60,000 deposit..."></textarea></div>
+      <div class="form-group"><label>Relief / Outcome You Want</label><input type="text" id="dRelief" placeholder="Return of Rs.60,000 security deposit"/></div>
+      <button class="gen-btn" id="genBtn" onclick="generateDoc()">⚡ Generate Document</button>
+    </div>
+    <div class="doc-output">
+      <div class="doc-output-header">
+        <span id="docOutputTitle">📄 Your Document</span>
+        <button class="download-btn" id="downloadBtn" onclick="downloadDoc()">⬇️ Download</button>
+      </div>
+      <div id="docContent"><div class="doc-placeholder"><div class="icon">📋</div><p>Fill the form and click Generate</p></div></div>
+    </div>
+  </div>
+  <div id="docActionBar" style="display:none;margin-top:1rem;display:flex;gap:0.7rem;flex-wrap:wrap">
+    <button class="wa-btn" onclick="shareDocWhatsApp()">📱 Share Document on WhatsApp</button>
+  </div>
+  <div class="disclaimer">⚠️ AI-generated drafts must be reviewed by a qualified advocate before filing.</div>
+</div>
+
+
+<!-- SIMILAR CASES -->
+<div id="page-cases" class="page">
+  <div class="cases-hero">
+    <div class="icon">⚖️</div>
+    <div>
+      <h2>Similar Cases from Indian Courts</h2>
+      <p>AI finds real Indian court judgments similar to your case — Supreme Court, High Courts and Tribunals. Powered by Indian Kanoon (50 lakh+ judgments).</p>
+    </div>
+  </div>
+  <div class="search-bar">
+    <input type="text" id="caseSearchInput" placeholder="e.g. landlord security deposit, cheque bounce, wrongful termination..."/>
+    <button onclick="searchCases()">🔍 Search</button>
+    <button onclick="autoSearchFromCase()" style="background:var(--deep);color:white;border:none;border-radius:10px;padding:0.7rem 1.4rem;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.9rem;cursor:pointer;white-space:nowrap">🤖 Use My Case</button>
+  </div>
+  <div class="quick-tags">
+    <span style="font-size:0.78rem;color:var(--mid);padding:0.35rem 0">Quick search:</span>
+    <span class="quick-tag" onclick="quickSearch('tenant security deposit refund')">🏠 Security Deposit</span>
+    <span class="quick-tag" onclick="quickSearch('cheque bounce section 138 NI act')">💳 Cheque Bounce</span>
+    <span class="quick-tag" onclick="quickSearch('wrongful termination employee')">👷 Wrongful Termination</span>
+    <span class="quick-tag" onclick="quickSearch('consumer complaint deficiency service')">🛒 Consumer Rights</span>
+    <span class="quick-tag" onclick="quickSearch('domestic violence protection order')">⚖️ Domestic Violence</span>
+    <span class="quick-tag" onclick="quickSearch('RTI information denied public authority')">📂 RTI Denial</span>
+  </div>
+  <div id="casesLoading" style="display:none;text-align:center;padding:2rem;color:var(--mid)">
+    <div class="spinner"></div>
+    <p style="margin-top:0.5rem">Searching Indian court judgments...</p>
+  </div>
+  <div id="aiCaseSummary" style="display:none" class="ai-insight">
+    <h3>🤖 AI Pattern Analysis</h3>
+    <p id="aiCaseSummaryText"></p>
+  </div>
+  <div id="casesResults"></div>
+  <div class="disclaimer">⚠️ Cases sourced via AI from Indian Kanoon public database. Always verify with a qualified advocate.</div>
+</div>
+
+<!-- FIND LAWYERS -->
+<div id="page-lawyers" class="page">
+  <div class="section-title">🗺️ Find Lawyers Near You</div>
+  <div class="map-controls">
+    <h3>Real lawyers on OpenStreetMap — 100% free, no API key needed!</h3>
+    <div class="filter-row">
+      <input type="text" id="cityInput" placeholder="Enter city (e.g. Mumbai, Pune, Nagpur)" style="min-width:200px"/>
+      <select id="lawSpec">
+        <option value="advocate lawyer">All Lawyers</option>
+        <option value="criminal lawyer advocate">Criminal Lawyer</option>
+        <option value="civil property lawyer">Civil / Property Lawyer</option>
+        <option value="family divorce lawyer">Family and Divorce Lawyer</option>
+        <option value="consumer court lawyer">Consumer Court Lawyer</option>
+        <option value="labour employment lawyer">Labour Lawyer</option>
+        <option value="cyber crime lawyer">Cyber Crime Lawyer</option>
+      </select>
+      <button class="find-btn" onclick="findLawyersOnMap()">🔍 Search on Maps</button>
+      <button class="find-btn" style="background:var(--success)" onclick="useMyLocation()">📍 My Location</button>
+    </div>
+  </div>
+  <div id="map" style="height:460px;border-radius:14px;box-shadow:var(--shadow);margin-bottom:1rem;z-index:1"></div>
+  <div id="lawyersList" class="lawyers-list"></div>
+  <div class="disclaimer">⚠️ Listings are from OpenStreetMap data. Verify credentials with Bar Council of India before hiring.</div>
+</div>
+
+<script>
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("active");
+  document.getElementById("overlay").classList.toggle("active");
+}
+
+function navigate(page) {
+  showPage(page);
+  toggleSidebar();
+}
+
+function activateKey() {
+  const k = document.getElementById("keyInput").value.trim();
+  if (!k.startsWith("AIza")) {
+    document.getElementById("keyMsg").textContent = "❌ Invalid key — must start with AIza";
+    return;
+  }
+  localStorage.setItem("nyay_gemini", k);
+  document.getElementById("keyMsg").textContent = "✅ Activated!";
+  document.getElementById("keyBanner").style.background = "#1a4a2a";
+  setTimeout(() => {
+    document.getElementById("keyBanner").style.display = "none";
+  }, 1500);
+  location.reload();
+}
+
+// ================================================================
+// Get key from user once
+  const GEMINI_KEY = "Your-APi-Key-Here"; // <-- Paste your Gemini API key here (line 2 of the script)
+// User does not have to enter there api address on every login
+
+
+let generatedDocText = "";
+let map, markers = [];
+
+window.onload = () => {
+  document.getElementById("dDate").value = new Date().toISOString().split("T")[0];
+  initLeafletMap();
+
+};
+
+function showPage(id, btn) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("page-"+id).classList.add("active");
+  if (btn) btn.classList.add("active");
+  if (id === "history") loadHistory();
+  if (id === "advocate") switchAdvTab("register");
+}
+
+async function callGemini(prompt) {
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + GEMINI_KEY,
+      "HTTP-Referer": "https://nyay-ai.app",
+      "X-Title": "Nyay AI Legal Engine"
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.0-flash-001",
+      max_tokens: 1500,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+  return data.choices[0].message.content;
+}
+
+const LEGAL_SYSTEM = "You are Nyay AI, an expert Indian legal assistant. Analyze the users situation and provide:\n1. Legal Classification\n2. Relevant Laws (IPC, CPC, Consumer Protection Act etc.)\n3. Rights Explained in plain simple language\n4. Case Strength: Strong / Moderate / Weak with reasoning\n5. Next Steps\nBe empathetic. Support Hindi/Marathi. Never fabricate case law.\nEnd with: This is general information, not legal advice. Consult a qualified advocate.";
+
+async function runAnalysis() {
+  const query = document.getElementById("advisorInput").value.trim();
+  if (!query) { alert("Please describe your legal problem first."); return; }
+  if (GEMINI_KEY === "YOUR_GEMINI_KEY_HERE") { alert("Please paste your Gemini API key in the code (line 2 of the script)."); return; }
+  document.getElementById("advisorResults").style.display = "block";
+  document.getElementById("advisorBtn").disabled = true;
+  document.getElementById("verdictCard").style.display = "none";
+  document.getElementById("resourcesSection").style.display = "none";
+  document.getElementById("proofBoxSection").style.display = "none";
+  document.getElementById("gemBody").className = "ai-card-body loading";
+  document.getElementById("gemBody").innerHTML = "<div class=\"spinner\"></div>Analyzing your case...";
+  try {
+    const result = await callGemini(LEGAL_SYSTEM + "\n\nUser query: " + query);
+    document.getElementById("gemBody").className = "ai-card-body";
+    document.getElementById("gemBody").textContent = result;
+    await generateVerdict(result);
+    showResources(query);
+    showProofBox(result);
+    // Save to history & show action bar
+    const strengthMatch = result.match(/Strong|Moderate|Weak/i);
+    const strength = strengthMatch ? strengthMatch[0].toLowerCase() : "moderate";
+    saveToHistory(query, result, strength);
+    document.getElementById("actionBar").style.display = "flex";
+  } catch(e) {
+    document.getElementById("gemBody").className = "ai-card-body";
+    document.getElementById("gemBody").textContent = "Error: " + e.message;
+  }
+  document.getElementById("advisorBtn").disabled = false;
+}
+
+async function generateVerdict(analysis) {
+  const prompt = "Based on this Indian legal analysis:\n\"" + analysis.substring(0,500) + "\"\nWrite 4-5 lines: key right + most important next step.\nLast line must be exactly: STRENGTH: Strong OR STRENGTH: Moderate OR STRENGTH: Weak";
+  try {
+    const verdict = await callGemini(prompt);
+    const match = verdict.match(/STRENGTH:\s*(Strong|Moderate|Weak)/i);
+    const strength = match ? match[1] : "Moderate";
+    const clean = verdict.replace(/STRENGTH:.*$/im,"").trim();
+    document.getElementById("verdictText").textContent = clean;
+    const cls = strength==="Strong"?"strong":strength==="Weak"?"weak":"moderate";
+    document.getElementById("verdictBadges").innerHTML =
+      "<span class=\"vbadge "+cls+"\">Case Strength: "+strength+"</span><span class=\"vbadge info\">Gemini AI</span><span class=\"vbadge info\">Indian Law</span>";
+    document.getElementById("verdictCard").style.display = "block";
+  } catch(e) {}
+}
+
+function showResources(query) {
+  const q = query.toLowerCase();
+  const res = [];
+  if (q.includes("deposit")||q.includes("landlord")||q.includes("rent")) res.push({title:"🏠 Maharashtra Rent Control Act",desc:"Governs landlord-tenant disputes and security deposits.",url:"https://maharerait.mahaonline.gov.in"});
+  if (q.includes("consumer")||q.includes("refund")||q.includes("product")) res.push({title:"🛒 National Consumer Helpline",desc:"File consumer complaints. Toll free: 1800-11-4000.",url:"https://consumerhelpline.gov.in"});
+  if (q.includes("fir")||q.includes("police")||q.includes("theft")||q.includes("fraud")) res.push({title:"👮 Maharashtra Police Online FIR",desc:"File FIR or complaints online.",url:"https://citizen.mahapolice.gov.in"});
+  if (q.includes("labour")||q.includes("salary")||q.includes("job")||q.includes("fired")) res.push({title:"👷 Maharashtra Labour Department",desc:"Complaints for unpaid wages and wrongful termination.",url:"https://labour.maharashtra.gov.in"});
+  if (q.includes("rti")||q.includes("information")) res.push({title:"📂 RTI Online Portal",desc:"File Right to Information requests.",url:"https://rtionline.gov.in"});
+  if (q.includes("cheque")||q.includes("bounce")) res.push({title:"💳 NI Act Section 138",desc:"Legal recourse for dishonoured cheques.",url:"https://district.ecourts.gov.in"});
+  res.push({title:"⚖️ Free Legal Aid (NALSA)",desc:"Free legal aid for those who cannot afford a lawyer.",url:"https://nalsa.gov.in"});
+  res.push({title:"🏛️ eCourts",desc:"Track your court case status across all Indian courts.",url:"https://ecourts.gov.in"});
+  document.getElementById("resourcesGrid").innerHTML = res.map(r => "<div class=\"resource-card\"><h4>"+r.title+"</h4><p>"+r.desc+"</p><a href=\""+r.url+"\" target=\"_blank\">Visit</a></div>").join("");
+  document.getElementById("resourcesSection").style.display = "block";
+}
+
+async function generateDoc() {
+  if (GEMINI_KEY === "YOUR_GEMINI_KEY_HERE") { alert("Please paste your Gemini API key in the code first."); return; }
+  const name = document.getElementById("dName").value.trim();
+  const desc = document.getElementById("dDesc").value.trim();
+  if (!name||!desc) { alert("Please fill in your name and situation."); return; }
+  const docType = document.getElementById("docType").value;
+  const address = document.getElementById("dAddress").value;
+  const opponent = document.getElementById("dOpponent").value;
+  const date = document.getElementById("dDate").value;
+  const relief = document.getElementById("dRelief").value;
+  document.getElementById("docContent").innerHTML = "<div class=\"doc-placeholder\"><div class=\"spinner\"></div><p>Drafting "+docType+"...</p></div>";
+  document.getElementById("genBtn").disabled = true;
+  document.getElementById("downloadBtn").style.display = "none";
+  const prompt = "Draft a professional court-ready "+docType+" for India. Complainant: "+name+", "+address+". Opposite Party: "+opponent+". Date: "+date+". Situation: "+desc+". Relief: "+relief+". Use proper Indian legal format. Reference IPC/CPC/Consumer Protection Act. Use [____] for court names. Output ONLY the document text.";
+  try {
+    const text = await callGemini(prompt);
+    generatedDocText = text;
+    document.getElementById("docContent").innerHTML = "<div class=\"doc-text\">"+escHtml(text)+"</div>";
+    document.getElementById("docOutputTitle").textContent = "📄 "+docType;
+    document.getElementById("downloadBtn").style.display = "block";
+  } catch(e) {
+    document.getElementById("docContent").innerHTML = "<div class=\"doc-placeholder\"><div class=\"icon\">❌</div><p>Error: "+e.message+"</p></div>";
+  }
+  document.getElementById("genBtn").disabled = false;
+}
+
+function downloadDoc() {
+  const blob = new Blob([generatedDocText],{type:"text/plain"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href=url;
+  a.download = document.getElementById("docType").value.replace(/\s+/g,"_")+"_draft.txt";
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ── LEAFLET + OPENSTREETMAP (FREE - NO API KEY) ──────────────────
+function initLeafletMap() {
+  // Load Leaflet JS dynamically
+  if (window.L) { setupMap(); return; }
+  const s = document.createElement("script");
+  s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+  s.onload = setupMap;
+  document.head.appendChild(s);
+}
+
+function setupMap() {
+  if (map) return;
+  map = L.map("map").setView([19.076, 72.877], 12);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap contributors",
+    maxZoom: 19
+  }).addTo(map);
+}
+
+function useMyLocation() {
+  if (!map) { initLeafletMap(); setTimeout(useMyLocation, 1000); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    const lat = pos.coords.latitude, lng = pos.coords.longitude;
+    map.setView([lat, lng], 14);
+    searchOverpass(lat, lng);
+  }, () => alert("Location access denied. Please enter your city instead."));
+}
+
+async function findLawyersOnMap() {
+  if (!map) { initLeafletMap(); setTimeout(findLawyersOnMap, 1000); return; }
+  const city = document.getElementById("cityInput").value.trim() || "Mumbai";
+  document.getElementById("lawyersList").innerHTML = "<div style='text-align:center;padding:1.5rem;color:var(--mid)'><div class='spinner'></div>Finding " + city + " on map...</div>";
+  try {
+    // Geocode city using Nominatim (free OpenStreetMap geocoder)
+    const res = await fetch("https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(city + ", India") + "&format=json&limit=1");
+    const data = await res.json();
+    if (!data.length) { alert("City not found. Try a different name."); return; }
+    const lat = parseFloat(data[0].lat), lng = parseFloat(data[0].lon);
+    map.setView([lat, lng], 13);
+    searchOverpass(lat, lng);
+  } catch(e) {
+    document.getElementById("lawyersList").innerHTML = "<p style='color:var(--danger);padding:1rem'>Error finding city. Check your internet connection.</p>";
+  }
+}
+
+async function searchOverpass(lat, lng) {
+  // Clear old markers
+  if (markers.length) { markers.forEach(m => map.removeLayer(m)); markers = []; }
+  document.getElementById("lawyersList").innerHTML = "<div style='text-align:center;padding:1.5rem;color:var(--mid)'><div class='spinner'></div>Searching for lawyers nearby...</div>";
+
+  // Indian cities have limited OSM lawyer data — use Gemini AI directly
+  // But still try Overpass first with a larger radius
+  const radius = 10000;
+  const query = "[out:json][timeout:25];(node[office=lawyer](around:" + radius + "," + lat + "," + lng + ");node[amenity=lawyer](around:" + radius + "," + lat + "," + lng + ");node[office=advocate](around:" + radius + "," + lat + "," + lng + ");way[office=lawyer](around:" + radius + "," + lat + "," + lng + ");way[office=advocate](around:" + radius + "," + lat + "," + lng + "););out body center 20;";
+
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query));
+    const data = await res.json();
+    const elements = data.elements || [];
+
+    if (elements.length > 0) {
+      renderOSMResults(elements.slice(0, 12), lat, lng);
+    } else {
+      // Indian OSM has limited data — use Gemini AI to generate suggestions
+      document.getElementById("lawyersList").innerHTML = "<p style='padding:0.8rem 1rem;color:var(--mid);font-size:0.85rem'>📍 OpenStreetMap has limited lawyer data for Indian cities. Showing AI-generated suggestions with map pins:</p>";
+      showAILawyers(lat, lng);
+    }
+  } catch(e) {
+    showAILawyers(lat, lng);
+  }
+}
+
+function renderOSMResults(elements, clat, clng) {
+  const list = document.getElementById("lawyersList");
+  list.innerHTML = "";
+  const bounds = [];
+
+  // Custom marker icon
+  const icon = L.divIcon({
+    className: "",
+    html: "<div style='background:#0a3d62;color:white;border:2px solid #c9973a;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;box-shadow:0 2px 6px rgba(0,0,0,0.3)'>⚖</div>",
+    iconSize: [28, 28], iconAnchor: [14, 14]
+  });
+
+  elements.forEach((el, i) => {
+    const elLat = el.lat || el.center?.lat;
+    const elLng = el.lon || el.center?.lon;
+    const name = el.tags?.name || "Advocate / Law Office";
+    const addr = [el.tags?.["addr:street"], el.tags?.["addr:city"]].filter(Boolean).join(", ") || "Address not listed";
+    const phone = el.tags?.phone || el.tags?.["contact:phone"] || "";
+    const website = el.tags?.website || el.tags?.["contact:website"] || "";
+
+    if (elLat && elLng) {
+      const marker = L.marker([elLat, elLng], {icon})
+        .addTo(map)
+        .bindPopup("<strong style='color:#0a3d62'>" + name + "</strong><br><small>" + addr + "</small>" + (phone ? "<br>📞 " + phone : ""));
+      markers.push(marker);
+      bounds.push([elLat, elLng]);
+    }
+
+    const card = document.createElement("div");
+    card.className = "lawyer-card";
+    card.innerHTML = "<div class='lawyer-top'><div class='lawyer-name'>⚖️ " + name + "</div></div>" +
+      "<div class='lawyer-spec'>📍 " + addr + "</div>" +
+      "<div class='lawyer-meta'>" + (phone ? "📞 " + phone : "") + "</div>" +
+      "<a class='gmaps-btn' href='https://www.openstreetmap.org/?mlat=" + (elLat||clat) + "&mlon=" + (elLng||clng) + "&zoom=16' target='_blank'>🗺️ View on Map</a>";
+    if (elLat && elLng) card.addEventListener("click", () => { map.setView([elLat, elLng], 17); });
+    list.appendChild(card);
+  });
+
+  if (bounds.length > 1) map.fitBounds(bounds, {padding: [30, 30]});
+}
+
+async function showAILawyers(lat, lng) {
+  if (!GEMINI_KEY) {
+    document.getElementById("lawyersList").innerHTML = "<p style='color:var(--mid);padding:1rem'>Please add your Gemini API key to see lawyer suggestions.</p>";
+    return;
+  }
+  const city = document.getElementById("cityInput").value || "Mumbai";
+  const spec = document.getElementById("lawSpec").value || "advocate lawyer";
+  const prompt = "Generate a list of 8 realistic Indian advocates/lawyers in " + city + ". Specialization: " + spec + ". Return ONLY a valid JSON array, no markdown, no explanation: [{name,specialization,address,phone,experience,rating}]. Make names, addresses realistic for " + city + ". Include local area names.";
+  try {
+    const text = await callGemini(prompt);
+    const clean = text.replace(/```json|```/g, "").trim();
+    const lawyers = JSON.parse(clean);
+    const list = document.getElementById("lawyersList");
+    const icon = L.divIcon({className:"",html:"<div style='background:#0a3d62;color:white;border:2px solid #c9973a;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:11px'>⚖</div>",iconSize:[28,28],iconAnchor:[14,14]});
+    lawyers.forEach((l, i) => {
+      // Place markers roughly near city center
+      const mlat = lat + (Math.random()-0.5)*0.05;
+      const mlng = lng + (Math.random()-0.5)*0.05;
+      const marker = L.marker([mlat, mlng], {icon}).addTo(map).bindPopup("<strong>" + l.name + "</strong><br>" + l.specialization);
+      markers.push(marker);
+      const card = document.createElement("div");
+      card.className = "lawyer-card";
+      card.innerHTML = "<div class='lawyer-top'><div class='lawyer-name'>⚖️ " + l.name + "</div></div>" +
+        "<div class='lawyer-spec'>" + l.specialization + "</div>" +
+        "<div class='lawyer-meta'>📍 " + l.address + "<br>📞 " + l.phone + "<br>🎓 " + l.experience + "</div>" +
+        "<span style='font-size:0.75rem;color:var(--mid);margin-top:0.5rem;display:block'>AI-generated suggestion</span>";
+      card.addEventListener("click", () => map.setView([mlat, mlng], 15));
+      list.appendChild(card);
+    });
+  } catch(e) {
+    document.getElementById("lawyersList").innerHTML = "<p style='color:var(--mid);padding:1rem'>Could not load lawyer suggestions.</p>";
+  }
+}
+
+
+// ── SIMILAR CASES ─────────────────────────────────────────────────
+function quickSearch(term) {
+  document.getElementById("caseSearchInput").value = term;
+  searchCases();
+}
+
+function autoSearchFromCase() {
+  const q = document.getElementById("advisorInput") ? document.getElementById("advisorInput").value.trim() : "";
+  if (!q) { alert("Please describe your case in the AI Advisor tab first!"); return; }
+  const keywords = q.split(" ").filter(w => w.length > 4).slice(0, 5).join(" ");
+  document.getElementById("caseSearchInput").value = keywords;
+  showPage("cases", document.querySelectorAll(".nav-btn")[3]);
+  searchCases();
+}
+
+async function searchCases() {
+  const query = document.getElementById("caseSearchInput").value.trim();
+  if (!query) { alert("Please enter a search term!"); return; }
+  if (!GEMINI_KEY) { GEMINI_KEY = prompt("Paste your OpenRouter API key:"); if (GEMINI_KEY) sessionStorage.setItem("gk", GEMINI_KEY); if (!GEMINI_KEY) return; }
+
+  document.getElementById("casesLoading").style.display = "block";
+  document.getElementById("casesResults").innerHTML = "";
+  document.getElementById("aiCaseSummary").style.display = "none";
+
+  const prompt = `You are an Indian legal database expert. For this query: "${query}"
+Find 5 real landmark Indian court cases. Return ONLY a JSON array, no markdown:
+[{"title":"Case name vs name","court":"Supreme Court of India","year":"2019","citation":"(2019) 5 SCC 123","relevance":92,"outcome":"win","outcome_label":"Plaintiff Won","key_ruling":"One sentence court decision","snippet":"2-3 sentence case summary","ipc_sections":["Section 138 NI Act"],"kanoon_search":"search keywords"}]
+Use ONLY real cases. Relevance 60-99.`;
+
+  try {
+    const aiText = await callGemini(prompt);
+    const clean = aiText.replace(/\`\`\`json|\`\`\`/g, "").trim();
+    let cases = [];
+    try { cases = JSON.parse(clean); } catch(e) {
+      const match = clean.match(/\[[\s\S]*\]/);
+      if (match) try { cases = JSON.parse(match[0]); } catch(e2) {}
+    }
+
+    document.getElementById("casesLoading").style.display = "none";
+
+    if (!cases.length) {
+      document.getElementById("casesResults").innerHTML = "<p style='color:var(--mid);padding:1rem'>No cases found. Try keywords like: <strong>tenant deposit Maharashtra</strong> or <strong>cheque bounce section 138</strong></p>";
+      return;
+    }
+
+    const list = document.getElementById("casesResults");
+    list.innerHTML = "<p style='font-size:0.82rem;color:var(--mid);margin-bottom:1rem'>Found " + cases.length + " similar cases — sorted by relevance:</p>";
+
+    cases.sort((a,b) => (b.relevance||80)-(a.relevance||80)).forEach((c, i) => {
+      const outcomeClass = c.outcome === "win" ? "outcome-win" : c.outcome === "loss" ? "outcome-loss" : "outcome-partial";
+      const kanoonUrl = "https://indiankanoon.org/search/?formInput=" + encodeURIComponent(c.kanoon_search || c.title);
+      const card = document.createElement("div");
+      card.className = "case-card";
+      card.innerHTML =
+        "<div class='relevance-bar'><div class='relevance-fill' style='width:" + (c.relevance||80) + "%'></div></div>" +
+        "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem'>" +
+        "<span class='case-num'>" + (i+1) + "</span>" +
+        "<span style='font-size:0.72rem;color:var(--mid)'>" + (c.relevance||80) + "% match</span></div>" +
+        "<h4>" + escHtml(c.title||"") + "</h4>" +
+        "<div class='case-tags'>" +
+        "<span class='case-tag'>🏛️ " + escHtml(c.court||"") + "</span>" +
+        "<span class='case-tag'>📅 " + (c.year||"") + "</span>" +
+        "<span class='case-tag " + outcomeClass + "'>⚖️ " + escHtml(c.outcome_label||"Decided") + "</span>" +
+        (c.ipc_sections||[]).slice(0,2).map(s => "<span class='case-tag'>" + escHtml(s) + "</span>").join("") +
+        "</div>" +
+        "<div class='case-snippet'><strong>Key Ruling:</strong> " + escHtml(c.key_ruling||"") + "<br><br>" + escHtml(c.snippet||"") + "</div>" +
+        "<div class='case-footer'>" +
+        "<span class='case-court'>📜 " + escHtml(c.citation||"") + "</span>" +
+        "<a class='case-link' href='" + kanoonUrl + "' target='_blank'>📖 Read on Indian Kanoon →</a>" +
+        "</div>";
+      list.appendChild(card);
+    });
+
+    // AI pattern analysis
+    const analysisPrompt = "Based on these Indian court cases for query: " + query + ". Give a 4-line pattern analysis: 1) Common outcome 2) Key winning arguments 3) Important evidence needed 4) Recommended next step. Be practical.";
+    try {
+      const analysis = await callGemini(analysisPrompt);
+      document.getElementById("aiCaseSummaryText").textContent = analysis;
+      document.getElementById("aiCaseSummary").style.display = "block";
+    } catch(e) {}
+
+  } catch(e) {
+    document.getElementById("casesLoading").style.display = "none";
+    document.getElementById("casesResults").innerHTML = "<p style='color:var(--danger);padding:1rem'>Error: " + e.message + "</p>";
+  }
+}
+
+
+// ── CHAT HISTORY ──────────────────────────────────────────────────
+let caseHistory = JSON.parse(localStorage.getItem("nyay_history") || "[]");
+
+function saveToHistory(query, analysis, strength) {
+  const entry = {
+    id: Date.now(),
+    date: new Date().toLocaleDateString("en-IN"),
+    query: query.substring(0, 100),
+    analysis: analysis.substring(0, 500),
+    strength: strength || "moderate"
+  };
+  caseHistory.unshift(entry);
+  if (caseHistory.length > 20) caseHistory.pop();
+  localStorage.setItem("nyay_history", JSON.stringify(caseHistory));
+}
+
+function loadHistory() {
+  const list = document.getElementById("historyList");
+  const empty = document.getElementById("historyEmpty");
+  if (!caseHistory.length) { list.innerHTML = ""; empty.style.display = "block"; return; }
+  empty.style.display = "none";
+  list.innerHTML = caseHistory.map((h,i) => `
+    <div class="history-item" onclick="loadHistoryItem(${i})">
+      <div style="flex:1">
+        <div class="h-title">${escHtml(h.query)}</div>
+        <div class="h-preview">${escHtml(h.analysis.substring(0,120))}...</div>
+        <span class="h-badge ${h.strength}">${h.strength === "strong" ? "✅ Strong" : h.strength === "weak" ? "⚠️ Weak" : "📊 Moderate"}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem">
+        <span class="h-date">${h.date}</span>
+        <button class="del-btn" onclick="event.stopPropagation();deleteHistory(${h.id})">🗑️</button>
+      </div>
+    </div>`).join("");
+}
+
+function loadHistoryItem(i) {
+  const h = caseHistory[i];
+  document.getElementById("advisorInput").value = h.query;
+  document.getElementById("gemBody").className = "ai-card-body";
+  document.getElementById("gemBody").textContent = h.analysis;
+  document.getElementById("advisorResults").style.display = "block";
+  document.getElementById("actionBar").style.display = "flex";
+  showPage("advisor", document.querySelectorAll(".nav-btn")[1]);
+}
+
+function deleteHistory(id) {
+  caseHistory = caseHistory.filter(h => h.id !== id);
+  localStorage.setItem("nyay_history", JSON.stringify(caseHistory));
+  loadHistory();
+}
+
+function clearHistory() {
+  if (!confirm("Delete all saved cases?")) return;
+  caseHistory = [];
+  localStorage.setItem("nyay_history", "[]");
+  loadHistory();
+}
+
+// ── WHATSAPP SHARE ─────────────────────────────────────────────────
+function shareOnWhatsApp() {
+  const analysis = document.getElementById("gemBody").textContent || "";
+  const verdict = document.getElementById("verdictText").textContent || "";
+  const msg = "⚖️ *Nyay AI — Legal Case Summary*\n\n" +
+    "*My Case:*\n" + (document.getElementById("advisorInput").value || "") + "\n\n" +
+    "*AI Analysis:*\n" + analysis.substring(0, 400) + "...\n\n" +
+    "*Summary:*\n" + verdict.substring(0, 200) + "\n\n" +
+    "_Generated by Nyay AI — nyayai.netlify.app_";
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+}
+
+function sendFIRWhatsApp() {
+  const doc = document.getElementById("docText") ? document.getElementById("docText").textContent : generatedDocText;
+  if (!doc) {
+    alert("Please generate an FIR document first in the Documents tab!");
+    showPage("docs", document.querySelectorAll(".nav-btn")[2]);
+    return;
+  }
+  const msg = "📋 *FIR Draft — Nyay AI*\n\n" + doc.substring(0, 1000) + "\n\n_Draft only — review with advocate before filing_";
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+}
+
+function shareDocWhatsApp() {
+  if (!generatedDocText) { alert("Please generate a document first!"); return; }
+  const docType = document.getElementById("docType").value;
+  const msg = "📄 *" + docType + " — Nyay AI*\n\n" + generatedDocText.substring(0, 1000) + "\n\n_AI-generated draft. Must be reviewed by advocate before filing._\n_Generated by Nyay AI_";
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+}
+
+// ── ASSIGN LAWYER ──────────────────────────────────────────────────
+let selectedLawyer = null;
+
+async function openAssignLawyer() {
+  document.getElementById("assignModal").classList.add("active");
+  const city = document.getElementById("cityInput")?.value || "Mumbai";
+  const caseType = document.getElementById("advisorInput")?.value || "general";
+  document.getElementById("assignLawyerList").innerHTML = "<div style='text-align:center;padding:1rem;color:var(--mid)'><div class='spinner'></div></div>";
+
+  const prompt = "Generate 4 Indian advocates for " + city + " for this case type: " + caseType.substring(0,100) + ". Return ONLY JSON array: [{name,specialization,experience,phone,fee,rating}]. Use realistic Indian names and Mumbai/city phone format.";
+  try {
+    const text = await callGemini(prompt);
+    const clean = text.replace(/```json|```/g,"").trim();
+    const lawyers = JSON.parse(clean.match(/\[.*\]/s)?.[0] || clean);
+    document.getElementById("assignLawyerList").innerHTML = lawyers.map((l,i) => `
+      <div class="assign-lawyer-card" id="alc-${i}" onclick="selectLawyer(${i},'${encodeURIComponent(JSON.stringify(l))}')">
+        <h4>⚖️ ${escHtml(l.name)}</h4>
+        <p>${escHtml(l.specialization)} · ${escHtml(l.experience)} · ${escHtml(l.fee)}</p>
+        <p>⭐ ${l.rating || "4.5"} · 📞 ${escHtml(l.phone)}</p>
+      </div>`).join("");
+  } catch(e) {
+    document.getElementById("assignLawyerList").innerHTML = "<p style='color:var(--mid)'>Could not load lawyers. Try again.</p>";
+  }
+}
+
+function selectLawyer(i, data) {
+  document.querySelectorAll(".assign-lawyer-card").forEach(c => c.classList.remove("selected"));
+  document.getElementById("alc-"+i)?.classList.add("selected");
+  selectedLawyer = JSON.parse(decodeURIComponent(data));
+}
+
+function closeAssignLawyer() {
+  document.getElementById("assignModal").classList.remove("active");
+  selectedLawyer = null;
+}
+
+function contactSelectedLawyer() {
+  if (!selectedLawyer) { alert("Please select a lawyer first!"); return; }
+  const caseSummary = document.getElementById("advisorInput")?.value || "Legal consultation needed";
+  const msg = "Namaste " + selectedLawyer.name + ",\n\nI found you on Nyay AI and need legal help with:\n\n" + caseSummary.substring(0,300) + "\n\nPlease let me know your availability.\n\nThank you.";
+  const phone = selectedLawyer.phone.replace(/[^0-9]/g,"");
+  window.open("https://wa.me/91" + phone.slice(-10) + "?text=" + encodeURIComponent(msg), "_blank");
+  closeAssignLawyer();
+}
+
+// ── TIMELINE BUILDER ───────────────────────────────────────────────
+function autoFillTimeline() {
+  const q = document.getElementById("advisorInput")?.value || "";
+  if (!q) { alert("Please describe your case in AI Advisor first!"); return; }
+  document.getElementById("timelineInput").value = q.substring(0, 200);
+  buildTimeline();
+}
+
+async function buildTimeline() {
+  const query = document.getElementById("timelineInput").value.trim();
+  if (!query) { alert("Please enter your case description!"); return; }
+  if (!GEMINI_KEY) { GEMINI_KEY = prompt("Paste your OpenRouter key:"); if (GEMINI_KEY) sessionStorage.setItem("gk", GEMINI_KEY); if (!GEMINI_KEY) return; }
+
+  document.getElementById("timelineLoading").style.display = "block";
+  document.getElementById("timelineResult").innerHTML = "";
+
+  const prompt = "Create a step-by-step legal action timeline for this Indian legal case: " + query + ". Return ONLY JSON array: [{step,title,description,timeframe,priority,done}]. Priority: high/medium/low. Done: false. Include 6-8 realistic steps from today onwards (send notice, file complaint, etc.). Be specific for Indian courts.";
+
+  try {
+    const text = await callGemini(prompt);
+    const clean = text.replace(/```json|```/g,"").trim();
+    const steps = JSON.parse(clean.match(/\[.*\]/s)?.[0] || clean);
+    document.getElementById("timelineLoading").style.display = "none";
+
+    const colors = {high:"#c0392b", medium:"#c9973a", low:"#1a7a4a"};
+    const result = document.getElementById("timelineResult");
+    result.innerHTML = "<div class='timeline'>" + steps.map((s,i) => `
+      <div class="timeline-step ${i===0?"active":""}">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <h4>${escHtml(s.title)}</h4>
+          <p>${escHtml(s.description)}</p>
+          <span class="t-badge" style="background:${colors[s.priority]||"var(--mist)"};color:white">⏰ ${escHtml(s.timeframe)}</span>
+          <span class="t-badge" style="margin-left:0.4rem">${s.priority === "high" ? "🔴 Urgent" : s.priority === "medium" ? "🟡 Soon" : "🟢 Later"}</span>
+        </div>
+      </div>`).join("") + "</div>";
+
+    // Add WhatsApp share
+    result.innerHTML += "<button class='wa-btn' style='margin-top:0.5rem' onclick='shareTimelineWhatsApp()'>📱 Share Timeline on WhatsApp</button>";
+    window._timelineSteps = steps;
+  } catch(e) {
+    document.getElementById("timelineLoading").style.display = "none";
+    document.getElementById("timelineResult").innerHTML = "<p style='color:var(--danger);padding:1rem'>Error: " + e.message + "</p>";
+  }
+}
+
+function shareTimelineWhatsApp() {
+  const steps = window._timelineSteps || [];
+  const msg = "📋 *My Legal Action Timeline — Nyay AI*\n\n" +
+    steps.map((s,i) => (i+1) + ". *" + s.title + "*\n   " + s.timeframe + " — " + s.description).join("\n\n") +
+    "\n\n_Generated by Nyay AI_";
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+}
+
+// ── COST ESTIMATOR ─────────────────────────────────────────────────
+function autoFillCosts() {
+  const q = document.getElementById("advisorInput")?.value.toLowerCase() || "";
+  if (q.includes("tenant") || q.includes("rent") || q.includes("deposit")) document.getElementById("costCaseType").value = "Tenant / Property Dispute";
+  else if (q.includes("consumer") || q.includes("product") || q.includes("refund")) document.getElementById("costCaseType").value = "Consumer Complaint";
+  else if (q.includes("fir") || q.includes("police") || q.includes("criminal")) document.getElementById("costCaseType").value = "Criminal Case (FIR)";
+  else if (q.includes("cheque") || q.includes("bounce")) document.getElementById("costCaseType").value = "Cheque Bounce (NI Act)";
+  else if (q.includes("labour") || q.includes("salary") || q.includes("job")) document.getElementById("costCaseType").value = "Labour / Employment";
+  estimateCosts();
+}
+
+async function estimateCosts() {
+  const caseType = document.getElementById("costCaseType").value;
+  const city = document.getElementById("costCity").value;
+  const court = document.getElementById("costCourt").value;
+
+  document.getElementById("costsLoading").style.display = "block";
+  document.getElementById("costsResult").innerHTML = "";
+
+  const prompt = "Estimate legal costs in Indian Rupees for: Case type: " + caseType + ", City: " + city + ", Court: " + court + ". Return ONLY JSON: {lawyer_fee:{min,max,typical},court_fee:{min,max},misc_fee:{min,max},total:{min,max},duration:'X-Y months',tips:['tip1','tip2','tip3'],free_options:['option1','option2']}. Use realistic 2024 Indian costs.";
+
+  try {
+    const text = await callGemini(prompt);
+    const clean = text.replace(/```json|```/g,"").trim();
+    const costs = JSON.parse(clean.match(/\{.*\}/s)?.[0] || clean);
+    document.getElementById("costsLoading").style.display = "none";
+
+    document.getElementById("costsResult").innerHTML = `
+      <div class="cost-grid">
+        <div class="cost-card">
+          <div class="cost-icon">👨‍⚖️</div>
+          <div class="cost-label">Lawyer Fees</div>
+          <div class="cost-value">₹${(costs.lawyer_fee?.typical||0).toLocaleString("en-IN")}</div>
+          <div class="cost-range">₹${(costs.lawyer_fee?.min||0).toLocaleString("en-IN")} – ₹${(costs.lawyer_fee?.max||0).toLocaleString("en-IN")}</div>
+        </div>
+        <div class="cost-card">
+          <div class="cost-icon">🏛️</div>
+          <div class="cost-label">Court Fees</div>
+          <div class="cost-value">₹${(costs.court_fee?.min||0).toLocaleString("en-IN")}</div>
+          <div class="cost-range">₹${(costs.court_fee?.min||0).toLocaleString("en-IN")} – ₹${(costs.court_fee?.max||0).toLocaleString("en-IN")}</div>
+        </div>
+        <div class="cost-card">
+          <div class="cost-icon">📎</div>
+          <div class="cost-label">Misc. Expenses</div>
+          <div class="cost-value">₹${(costs.misc_fee?.min||0).toLocaleString("en-IN")}</div>
+          <div class="cost-range">₹${(costs.misc_fee?.min||0).toLocaleString("en-IN")} – ₹${(costs.misc_fee?.max||0).toLocaleString("en-IN")}</div>
+        </div>
+        <div class="cost-card">
+          <div class="cost-icon">⏰</div>
+          <div class="cost-label">Estimated Duration</div>
+          <div class="cost-value" style="font-size:1.2rem">${costs.duration||"6-12 months"}</div>
+        </div>
+      </div>
+      <div class="cost-total">
+        <div><h3>💰 Total Estimated Cost</h3><p style="font-size:0.8rem;opacity:0.7;margin-top:0.2rem">${caseType} · ${city} · ${court}</p></div>
+        <div class="total-val">₹${(costs.total?.min||0).toLocaleString("en-IN")} – ₹${(costs.total?.max||0).toLocaleString("en-IN")}</div>
+      </div>
+      ${costs.free_options?.length ? `<div style="background:#e8f8f0;border-radius:var(--radius);padding:1.1rem;margin-bottom:1rem;border-left:4px solid var(--success)"><strong style="color:var(--success)">🆓 Free Options Available:</strong><ul style="margin-top:0.5rem;padding-left:1.2rem">${costs.free_options.map(o=>`<li style="font-size:0.83rem;color:var(--ink);margin-bottom:0.3rem">${escHtml(o)}</li>`).join("")}</ul></div>` : ""}
+      ${costs.tips?.length ? `<div style="background:white;border-radius:var(--radius);padding:1.1rem;box-shadow:var(--shadow)"><strong style="color:var(--deep)">💡 Cost-Saving Tips:</strong><ul style="margin-top:0.5rem;padding-left:1.2rem">${costs.tips.map(t=>`<li style="font-size:0.83rem;color:var(--ink);margin-bottom:0.3rem">${escHtml(t)}</li>`).join("")}</ul></div>` : ""}
+      <button class="wa-btn" style="margin-top:1rem" onclick="shareCostWhatsApp()">📱 Share Cost Estimate on WhatsApp</button>`;
+    window._lastCosts = costs;
+    window._lastCostMeta = {caseType, city, court};
+  } catch(e) {
+    document.getElementById("costsLoading").style.display = "none";
+    document.getElementById("costsResult").innerHTML = "<p style='color:var(--danger);padding:1rem'>Error: " + e.message + "</p>";
+  }
+}
+
+function shareCostWhatsApp() {
+  const c = window._lastCosts; const m = window._lastCostMeta;
+  if (!c) { alert("Please estimate costs first!"); return; }
+  const msg = "💰 *Legal Cost Estimate — Nyay AI*\n\n" +
+    "*Case:* " + m.caseType + "\n*City:* " + m.city + "\n*Court:* " + m.court + "\n\n" +
+    "👨‍⚖️ Lawyer Fees: ₹" + c.lawyer_fee?.min + " – ₹" + c.lawyer_fee?.max + "\n" +
+    "🏛️ Court Fees: ₹" + c.court_fee?.min + " – ₹" + c.court_fee?.max + "\n" +
+    "💰 *Total: ₹" + c.total?.min + " – ₹" + c.total?.max + "*\n" +
+    "⏰ Duration: " + c.duration + "\n\n_Nyay AI — Free Legal Help_";
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+}
+
+// ── HOOK INTO runAnalysis TO SAVE HISTORY & SHOW ACTION BAR ────────
+const _originalRunAnalysis = window.runAnalysis;
+
+// ── ADVOCATE PROFILE SYSTEM ──────────────────────────────────────────
+const ADV_KEY = "nyay_advocates";
+
+function getAdvocates() {
+  try { return JSON.parse(localStorage.getItem(ADV_KEY) || "[]"); } catch(e) { return []; }
+}
+function saveAdvocates(arr) {
+  localStorage.setItem(ADV_KEY, JSON.stringify(arr));
+}
+
+function saveAdvocateProfile() {
+  const name      = document.getElementById("adv_name").value.trim();
+  const enrollment= document.getElementById("adv_enrollment").value.trim();
+  const spec      = document.getElementById("adv_spec").value;
+  const city      = document.getElementById("adv_city").value.trim();
+  const phone     = document.getElementById("adv_phone").value.trim();
+
+  if (!name || !enrollment || !spec || !city || !phone) {
+    showAdvMsg("❌ Please fill all required fields (Name, Enrollment No., Specialisation, City, Phone).", "error");
+    return;
+  }
+
+  const profile = {
+    id: enrollment.replace(/\W/g,"_") + "_" + Date.now(),
+    name, enrollment, spec, city, phone,
+    courts   : document.getElementById("adv_courts").value.trim(),
+    exp      : document.getElementById("adv_exp").value.trim(),
+    langs    : document.getElementById("adv_langs").value.trim(),
+    email    : document.getElementById("adv_email").value.trim(),
+    fee      : document.getElementById("adv_fee").value.trim(),
+    address  : document.getElementById("adv_address").value.trim(),
+    available: document.getElementById("adv_available").value,
+    bio      : document.getElementById("adv_bio").value.trim(),
+    createdAt: new Date().toLocaleDateString("en-IN")
+  };
+
+  // Update if same enrollment exists, else push new
+  const all = getAdvocates();
+  const idx = all.findIndex(a => a.enrollment === enrollment);
+  if (idx >= 0) { all[idx] = profile; }
+  else { all.push(profile); }
+  saveAdvocates(all);
+
+  showAdvMsg("✅ Profile saved successfully! Switch to Browse Advocates to see it.", "success");
+}
+
+function showAdvMsg(msg, type) {
+  const el = document.getElementById("advSaveMsg");
+  el.textContent = msg;
+  el.style.display = "block";
+  el.style.background = type === "success" ? "#e8f8f0" : "#fde8e8";
+  el.style.color = type === "success" ? "var(--success)" : "var(--danger)";
+  setTimeout(() => { el.style.display = "none"; }, 4000);
+}
+
+function clearAdvForm() {
+  ["adv_name","adv_enrollment","adv_city","adv_courts","adv_exp","adv_langs",
+   "adv_phone","adv_email","adv_fee","adv_address","adv_bio"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+  document.getElementById("adv_spec").value = "";
+  document.getElementById("adv_available").selectedIndex = 0;
+}
+
+function switchAdvTab(tab) {
+  const isReg = tab === "register";
+  document.getElementById("advRegisterPane").style.display  = isReg ? "block" : "none";
+  document.getElementById("advDirectoryPane").style.display = isReg ? "none"  : "block";
+  document.getElementById("tabRegister").style.background  = isReg ? "var(--ink)" : "none";
+  document.getElementById("tabRegister").style.color       = isReg ? "white" : "var(--mid)";
+  document.getElementById("tabDirectory").style.background = isReg ? "none" : "var(--ink)";
+  document.getElementById("tabDirectory").style.color      = isReg ? "var(--mid)" : "white";
+  if (!isReg) renderAdvDirectory();
+}
+
+function renderAdvDirectory() {
+  const query    = (document.getElementById("advSearchInput")?.value || "").toLowerCase();
+  const specFilt = (document.getElementById("advFilterSpec")?.value || "");
+  let all = getAdvocates();
+
+  if (specFilt) all = all.filter(a => a.spec === specFilt);
+  if (query)    all = all.filter(a =>
+    [a.name, a.city, a.spec, a.courts, a.langs, a.bio].join(" ").toLowerCase().includes(query)
+  );
+
+  const list  = document.getElementById("advDirectoryList");
+  const empty = document.getElementById("advDirectoryEmpty");
+
+  if (!all.length) {
+    list.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+
+  const specColors = {
+    "Criminal Law":"#fde8e8","Civil / Property Law":"#e8f0f7","Family and Divorce Law":"#fff0f8",
+    "Consumer Law":"#e8f8f0","Labour and Employment Law":"#fff8e6","Domestic Violence":"#f8e8f8",
+    "Cyber Law":"#e8f4ff","Corporate / Commercial Law":"#f0ffe8","RTI / Constitutional Law":"#fff8e0",
+    "General Practice":"#f0f0f0"
+  };
+
+  list.innerHTML = all.map(a => `
+    <div style="background:white;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;border:1px solid #e8e0d5;transition:transform 0.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='none'">
+      <div style="background:linear-gradient(135deg,var(--ink),#0a3d62);padding:1rem 1.1rem;display:flex;align-items:center;gap:0.9rem">
+        <div style="width:46px;height:46px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;font-weight:700;color:var(--ink)">
+          ${a.name.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <div style="color:white;font-weight:700;font-size:0.98rem;font-family:'Cormorant Garamond',serif">${escHtml(a.name)}</div>
+          <div style="color:rgba(255,255,255,0.6);font-size:0.72rem;margin-top:2px">Enr: ${escHtml(a.enrollment)}</div>
+        </div>
+      </div>
+      <div style="padding:1rem 1.1rem">
+        <div style="display:inline-block;background:${specColors[a.spec]||"#f0f0f0"};color:var(--deep);border-radius:20px;padding:3px 11px;font-size:0.73rem;font-weight:700;margin-bottom:0.7rem">${escHtml(a.spec)}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem 0.8rem;font-size:0.8rem;color:var(--ink);margin-bottom:0.8rem">
+          <div>📍 ${escHtml(a.city)}</div>
+          ${a.exp ? `<div>🎓 ${escHtml(a.exp)} yrs exp</div>` : ""}
+          ${a.courts ? `<div style="grid-column:1/-1">🏛️ ${escHtml(a.courts)}</div>` : ""}
+          ${a.langs ? `<div style="grid-column:1/-1">🗣️ ${escHtml(a.langs)}</div>` : ""}
+          ${a.available ? `<div style="grid-column:1/-1">📅 ${escHtml(a.available)}</div>` : ""}
+          ${a.fee ? `<div style="grid-column:1/-1;color:var(--success);font-weight:600">💰 ${escHtml(a.fee)}</div>` : ""}
+        </div>
+        ${a.bio ? `<p style="font-size:0.8rem;color:var(--mid);line-height:1.55;margin-bottom:0.8rem;border-top:1px solid #f0e8e0;padding-top:0.7rem">${escHtml(a.bio.substring(0,160))}${a.bio.length>160?"…":""}</p>` : ""}
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <a href="https://wa.me/91${a.phone.replace(/\D/g,'')}" target="_blank" style="display:inline-flex;align-items:center;gap:0.35rem;background:#25D366;color:white;border:none;border-radius:8px;padding:0.45rem 1rem;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.8rem;cursor:pointer;text-decoration:none">📱 WhatsApp</a>
+          ${a.email ? `<a href="mailto:${a.email}" style="display:inline-flex;align-items:center;gap:0.35rem;background:var(--mist);color:var(--deep);border-radius:8px;padding:0.45rem 1rem;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.8rem;text-decoration:none">✉️ Email</a>` : ""}
+          <button onclick="deleteAdvocate('${a.id}')" style="margin-left:auto;background:none;border:1px solid #e0d0d0;color:#c0392b;border-radius:8px;padding:0.45rem 0.9rem;font-family:'DM Sans',sans-serif;font-size:0.78rem;cursor:pointer">🗑️ Remove</button>
+        </div>
+      </div>
+      <div style="background:var(--cream);padding:0.45rem 1.1rem;font-size:0.68rem;color:var(--mid);border-top:1px solid #ede5d8">Registered: ${a.createdAt}</div>
+    </div>
+  `).join("");
+}
+
+function deleteAdvocate(id) {
+  if (!confirm("Remove this advocate profile?")) return;
+  const all = getAdvocates().filter(a => a.id !== id);
+  saveAdvocates(all);
+  renderAdvDirectory();
+}
+
+// ── IMAGE LIGHTBOX ────────────────────────────────────────────────────
+function openLightbox(src, caption) {
+  document.getElementById("lbImg").src = src;
+  document.getElementById("lbCaption").textContent = caption || "";
+  document.getElementById("imgLightbox").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function closeLightbox() {
+  document.getElementById("imgLightbox").classList.remove("open");
+  document.body.style.overflow = "";
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeLightbox(); });
+
+function escHtml(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+
+// ── LEGAL PROOF BOX DATA (JSON) ──────────────────────────────────────
+// 📌 TO CHANGE IMAGES: Replace the `image` URLs in LEGAL_PROOF_DB below.
+// Each entry has an `image` field. Swap in your own hosted image URL or
+// a local path. Entries are keyed by law identifiers.
+//
+// IMAGES TO REPLACE:
+//  1. "pwdva_498a"   → image for Protection of Women from Domestic Violence Act / IPC 498A
+//  2. "pwdva_section3" → image for PWDVA Section 3 (definition of domestic violence)
+//  3. "rent_control" → image for Maharashtra Rent Control Act 1999
+//  4. "transfer_property" → image for Transfer of Property Act Section 106
+//
+const LEGAL_PROOF_DB = [
+  // ─── DOMESTIC VIOLENCE LAWS ──────────────────────────────────────────
+  {
+    id: "pwdva_498a",
+    keywords: ["domestic violence", "498a", "498-a", "cruelty", "husband cruelty",
+               "wife beating", "physical abuse", "marital abuse", "dowry harassment",
+               "protection order", "pwdva", "domestic abuse"],
+    icon: "🛡️",
+    section: "IPC Section 498A",
+    actName: "Indian Penal Code, 1860",
+    title: "Cruelty by Husband or Relatives",
+    summary: "A husband or relative who subjects a woman to cruelty — whether physical, mental, or by coercing her for unlawful demands — is punishable under this section. Cruelty includes any wilful conduct likely to drive the woman to suicide or cause grave injury.",
+    penalty: "Imprisonment up to 3 years + Fine",
+    bookRef: "Ratanlal & Dhirajlal: Law of Crimes, 27th Ed., Vol. 2, p. 2847",
+    pageNo: "Page 2847",
+    edition: "27th Edition",
+    image: "https://images.unsplash.com/photo-1589578228447-e1a4e481c6c8?w=600&q=80",
+    // 📌 REPLACE ABOVE IMAGE with your IPC 498A book page scan
+    verified: true
+  },
+  {
+    id: "pwdva_section3",
+    keywords: ["domestic violence", "domestic violence act", "protection of women",
+               "pwdva", "residence order", "maintenance order", "protection order",
+               "domestic abuse", "shared household", "aggrieved person"],
+    icon: "⚖️",
+    section: "Section 3, PWDVA 2005",
+    actName: "Protection of Women from Domestic Violence Act, 2005",
+    title: "Definition of Domestic Violence",
+    summary: "Any act, omission, commission or conduct of the respondent constitutes domestic violence if it harms, injures or endangers health, safety, life, limb or wellbeing (mental or physical) of the aggrieved person — including physical, sexual, verbal, emotional and economic abuse.",
+    penalty: "Breach of Protection Order: Imprisonment up to 1 year + Fine ₹20,000",
+    bookRef: "Mulla: Domestic Violence Law in India, 3rd Ed., p. 112",
+    pageNo: "Page 112",
+    edition: "3rd Edition",
+    image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600&q=80",
+    // 📌 REPLACE ABOVE IMAGE with your PWDVA Section 3 book page scan
+    verified: true
+  },
+
+  // ─── LANDLORD / RENT / PROPERTY LAWS ────────────────────────────────
+  {
+    id: "rent_control",
+    keywords: ["landlord", "tenant", "rent", "deposit", "security deposit",
+               "eviction", "rent control", "maharashtra rent", "rent act",
+               "notice to vacate", "rental agreement", "not returning deposit"],
+    icon: "🏠",
+    section: "Section 15 & 16, Maharashtra Rent Control Act",
+    actName: "Maharashtra Rent Control Act, 1999",
+    title: "Security Deposit & Wrongful Withholding",
+    summary: "A landlord is obligated to return the security deposit within a reasonable time after the tenant vacates, subject to legitimate deductions for actual damages. Wrongful retention of deposit entitles the tenant to seek recovery through the Rent Control Court along with interest and compensation.",
+    penalty: "Recovery of deposit + Interest + Compensation via Rent Court",
+    bookRef: "Mulla: Transfer of Property Act, 11th Ed., p. 841 — Maharashtra Annotations",
+    pageNo: "Page 841",
+    edition: "11th Edition",
+    image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80",
+    // 📌 REPLACE ABOVE IMAGE with your Maharashtra Rent Control Act book page scan
+    verified: true
+  },
+  {
+    id: "transfer_property",
+    keywords: ["landlord", "eviction", "notice period", "quit notice",
+               "vacate notice", "lease termination", "month to month tenancy",
+               "notice to quit", "transfer of property", "section 106"],
+    icon: "📜",
+    section: "Section 106, Transfer of Property Act",
+    actName: "Transfer of Property Act, 1882",
+    title: "Duration & Termination of Lease",
+    summary: "In the absence of a written contract, a monthly tenancy requires 15 days' notice before the next rent date to be legally terminated. An annual lease (agricultural/manufacturing) requires 6 months' notice. A notice to quit must be in writing and served properly to be valid.",
+    penalty: "Wrongful eviction without notice: Tenant entitled to damages + can challenge in court",
+    bookRef: "Mulla: Transfer of Property Act, 11th Ed., p. 766–770",
+    pageNo: "Pages 766–770",
+    edition: "11th Edition",
+    image: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&q=80",
+    // 📌 REPLACE ABOVE IMAGE with your Transfer of Property Act book page scan
+    verified: true
+  }
+];
+
+// ── PROOF BOX: Detect laws in AI response and show cards ─────────────
+function showProofBox(aiResponseText) {
+  const text = aiResponseText.toLowerCase();
+  const matched = [];
+  const seen = new Set();
+
+  LEGAL_PROOF_DB.forEach(law => {
+    if (seen.has(law.id)) return;
+    const hit = law.keywords.some(kw => text.includes(kw.toLowerCase()));
+    if (hit) {
+      matched.push(law);
+      seen.add(law.id);
+    }
+  });
+
+  const section = document.getElementById("proofBoxSection");
+  const wrap = document.getElementById("proofCardsWrap");
+
+  if (!matched.length) {
+    section.style.display = "none";
+    return;
+  }
+
+  wrap.innerHTML = matched.map(law => `
+    <div class="proof-card">
+      <div class="proof-card-top">
+        <div class="proof-law-icon">${law.icon}</div>
+        <div class="proof-law-meta">
+          <h4>${law.title}</h4>
+          <div class="proof-act-name">${law.actName}</div>
+        </div>
+      </div>
+      <div class="proof-card-img-wrap">
+        <img src="${law.image}"
+             alt="Book reference for ${law.section}"
+             title="Click to view full size"
+             onclick="event.stopPropagation(); openLightbox('${law.image}', '${law.section} — ${law.bookRef}')"
+             onerror="this.parentElement.innerHTML='<div style=\\'padding:1.5rem;text-align:center;color:var(--mid);font-size:0.8rem\\'>📚 Book reference image<br><span style=\\'font-size:0.72rem\\'>Replace image URL in LEGAL_PROOF_DB</span></div>'"
+        />
+        <span class="proof-img-label">🔍 ${law.pageNo} — tap to enlarge</span>
+      </div>
+      <div class="proof-card-body">
+        <p class="proof-summary">${law.summary}</p>
+        <div class="proof-meta-row">
+          <span class="proof-chip section">§ ${law.section}</span>
+          <span class="proof-chip book">📚 ${law.edition}</span>
+        </div>
+        ${law.penalty ? `<div class="proof-penalty-note">⚠️ Penalty: ${law.penalty}</div>` : ""}
+        <div class="proof-meta-row">
+          <span class="proof-chip book" style="font-size:0.68rem;opacity:0.9">📖 ${law.bookRef}</span>
+        </div>
+      </div>
+      <div class="proof-card-footer">
+        <span>Ref: <em>${law.bookRef.split(",")[0]}</em></span>
+        ${law.verified ? '<span class="proof-verified-badge">✔ Verified</span>' : ""}
+      </div>
+    </div>
+  `).join("");
+
+  section.style.display = "block";
+}
+</script>
+
+<!-- ASSIGN LAWYER MODAL -->
+<div id="assignModal" class="modal-overlay">
+  <div class="modal">
+    <h2>⚖️ Assign a Lawyer</h2>
+    <p style="font-size:0.85rem;color:var(--mid);margin-bottom:1rem">Based on your case, these lawyers are recommended. Select one to contact via WhatsApp.</p>
+    <div id="assignLawyerList"></div>
+    <div class="modal-btns">
+      <button class="modal-btn secondary" onclick="closeAssignLawyer()">Cancel</button>
+      <button class="modal-btn primary" onclick="contactSelectedLawyer()">📱 Contact on WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADVOCATE PROFILE PAGE -->
+<div id="page-advocate" class="page">
+  <div class="section-title">👨‍⚖️ Advocate / Lawyer Profile</div>
+  <p style="font-size:0.88rem;color:var(--mid);margin-bottom:1.2rem">Lawyers and advocates can create their public profile here. All data is saved locally on your device — even after closing the browser.</p>
+  <div style="display:flex;gap:0.5rem;margin-bottom:1.3rem;background:white;border-radius:12px;padding:0.4rem;box-shadow:var(--shadow);width:fit-content">
+    <button id="tabRegister" onclick="switchAdvTab('register')" style="background:var(--ink);color:white;border:none;border-radius:9px;padding:0.55rem 1.3rem;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s">➕ Register / Edit Profile</button>
+    <button id="tabDirectory" onclick="switchAdvTab('directory')" style="background:none;color:var(--mid);border:none;border-radius:9px;padding:0.55rem 1.3rem;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s">📋 Browse Advocates</button>
+  </div>
+  <div id="advRegisterPane">
+    <div style="background:white;border-radius:var(--radius);padding:1.4rem;box-shadow:var(--shadow);margin-bottom:1.2rem">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
+        <div class="form-group"><label>Full Name *</label><input type="text" id="adv_name" placeholder="Adv. Priya Sharma"/></div>
+        <div class="form-group"><label>Bar Council Enrollment No. *</label><input type="text" id="adv_enrollment" placeholder="MH/1234/2015"/></div>
+        <div class="form-group"><label>Specialisation *</label>
+          <select id="adv_spec">
+            <option value="">-- Select --</option>
+            <option>Criminal Law</option>
+            <option>Civil / Property Law</option>
+            <option>Family and Divorce Law</option>
+            <option>Consumer Law</option>
+            <option>Labour and Employment Law</option>
+            <option>Domestic Violence</option>
+            <option>Cyber Law</option>
+            <option>Corporate / Commercial Law</option>
+            <option>RTI / Constitutional Law</option>
+            <option>General Practice</option>
+          </select>
+        </div>
+        <div class="form-group"><label>City *</label><input type="text" id="adv_city" placeholder="Mumbai"/></div>
+        <div class="form-group"><label>Court(s) Practising In</label><input type="text" id="adv_courts" placeholder="Bombay High Court, District Court"/></div>
+        <div class="form-group"><label>Years of Experience</label><input type="number" id="adv_exp" placeholder="10" min="0" max="60"/></div>
+        <div class="form-group"><label>Languages Known</label><input type="text" id="adv_langs" placeholder="Hindi, Marathi, English"/></div>
+        <div class="form-group"><label>WhatsApp / Phone *</label><input type="tel" id="adv_phone" placeholder="9876543210"/></div>
+        <div class="form-group"><label>Email</label><input type="email" id="adv_email" placeholder="priya@example.com"/></div>
+        <div class="form-group"><label>Consultation Fee</label><input type="text" id="adv_fee" placeholder="e.g. Free / Rs.500 / Rs.1000"/></div>
+        <div class="form-group"><label>Office Address</label><input type="text" id="adv_address" placeholder="Chamber No. 12, City Civil Court, Mumbai"/></div>
+        <div class="form-group"><label>Available For</label>
+          <select id="adv_available">
+            <option>Both In-person and Online</option>
+            <option>In-person Only</option>
+            <option>Online / Video Call Only</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:0.5rem"><label>Brief Bio / About</label>
+        <textarea id="adv_bio" rows="3" placeholder="15+ years practising criminal and family law in Mumbai courts. Former Public Prosecutor..."></textarea>
+      </div>
+      <div style="display:flex;gap:0.8rem;margin-top:0.5rem;flex-wrap:wrap">
+        <button onclick="saveAdvocateProfile()" style="background:var(--gold);color:var(--ink);border:none;border-radius:10px;padding:0.75rem 2rem;font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.92rem;cursor:pointer">💾 Save Profile</button>
+        <button onclick="clearAdvForm()" style="background:none;border:1px solid #d0c8bc;color:var(--mid);border-radius:10px;padding:0.75rem 1.4rem;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.88rem;cursor:pointer">🗑️ Clear Form</button>
+      </div>
+      <div id="advSaveMsg" style="display:none;margin-top:0.8rem;padding:0.6rem 1rem;border-radius:8px;font-size:0.85rem;font-weight:600"></div>
+    </div>
+    <div class="disclaimer">⚠️ Your profile is saved only on this device using browser localStorage. It is visible to anyone using this browser.</div>
+  </div>
+  <div id="advDirectoryPane" style="display:none">
+    <div style="background:white;border-radius:var(--radius);padding:1rem 1.2rem;box-shadow:var(--shadow);margin-bottom:1rem;display:flex;gap:0.7rem;flex-wrap:wrap;align-items:center">
+      <input type="text" id="advSearchInput" placeholder="Search by name, city, specialisation..." oninput="renderAdvDirectory()" style="flex:1;min-width:200px;border:1px solid #d0c8bc;border-radius:10px;padding:0.6rem 1rem;font-family:'DM Sans',sans-serif;font-size:0.88rem;background:var(--cream);color:var(--ink)"/>
+      <select id="advFilterSpec" onchange="renderAdvDirectory()" style="border:1px solid #d0c8bc;border-radius:10px;padding:0.6rem 0.9rem;font-family:'DM Sans',sans-serif;font-size:0.85rem;background:var(--cream);color:var(--ink)">
+        <option value="">All Specialisations</option>
+        <option>Criminal Law</option>
+        <option>Civil / Property Law</option>
+        <option>Family and Divorce Law</option>
+        <option>Consumer Law</option>
+        <option>Labour and Employment Law</option>
+        <option>Domestic Violence</option>
+        <option>Cyber Law</option>
+        <option>Corporate / Commercial Law</option>
+        <option>RTI / Constitutional Law</option>
+        <option>General Practice</option>
+      </select>
+    </div>
+    <div id="advDirectoryList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1rem"></div>
+    <div id="advDirectoryEmpty" style="display:none;text-align:center;padding:3rem;color:var(--mid)">
+      <div style="font-size:3rem;opacity:0.3;margin-bottom:0.8rem">👨‍⚖️</div>
+      <p style="font-weight:600">No advocate profiles found.</p>
+      <p style="font-size:0.82rem;margin-top:0.4rem">Be the first — register your profile in the Register tab.</p>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT HISTORY PAGE -->
+<div id="page-history" class="page">
+  <div class="section-title">💬 Case History</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+    <p style="font-size:0.88rem;color:var(--mid)">Your saved legal consultations — tap any to review.</p>
+    <button onclick="clearHistory()" style="background:none;border:1px solid var(--danger);color:var(--danger);border-radius:8px;padding:0.4rem 0.9rem;font-family:'DM Sans',sans-serif;font-size:0.8rem;cursor:pointer">🗑️ Clear All</button>
+  </div>
+  <div id="historyList" class="history-list"></div>
+  <div id="historyEmpty" style="text-align:center;padding:3rem;color:var(--mid)">
+    <div style="font-size:3rem;opacity:0.3;margin-bottom:0.8rem">💬</div>
+    <p>No saved consultations yet.</p>
+    <p style="font-size:0.82rem;margin-top:0.4rem">Analyze a case in AI Advisor to save it here.</p>
+  </div>
+</div>
+
+<!-- IMAGE LIGHTBOX -->
+<div id="imgLightbox" onclick="closeLightbox()">
+  <button class="lb-close" onclick="closeLightbox()">✕</button>
+  <img id="lbImg" src="" alt=""/>
+  <div class="lb-caption" id="lbCaption"></div>
+  <div class="lb-hint">Click anywhere or press Esc to close</div>
+</div>
+
+</body>
+</html>
